@@ -12,9 +12,16 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^7.3.5"
+    "astro": "^7.3.5",
+    "dotenv": "^18.0.4",
+    "drizzle-orm": "^0.45.3",
+    "postgres": "^3.4.9"
   },
   "allowScripts": {
     "esbuild": true
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11"
   }
 }

@@ -1,0 +1,75 @@
+---
+---
+
+<div class="fixed top-6 right-6 z-40">
+  <button
+    id="music-toggle"
+    type="button"
+    aria-label="Toggle Background Music"
+    class="w-12 h-12 rounded-full bg-white/80 backdrop-blur-md border border-[#D4AF37]/50 shadow-xl flex items-center justify-center text-[#A67C1E] hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer"
+  >
+    <svg id="music-icon-playing" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+    </svg>
+    <svg id="music-icon-paused" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hidden text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+    </svg>
+  </button>
+
+  <!-- Royalty-free soothing wedding instrumental audio track -->
+  <audio
+    id="wedding-audio"
+    loop
+    preload="auto"
+    src="https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3"
+  ></audio>
+</div>
+
+<script>
+  const audio = document.getElementById('wedding-audio') as HTMLAudioElement | null;
+  const toggleBtn = document.getElementById('music-toggle');
+  const iconPlaying = document.getElementById('music-icon-playing');
+  const iconPaused = document.getElementById('music-icon-paused');
+
+  let isPlaying = false;
+
+  function updateMusicState(playing: boolean) {
+    isPlaying = playing;
+    if (playing) {
+      toggleBtn?.classList.add('animate-spin-slow');
+      iconPlaying?.classList.remove('hidden');
+      iconPaused?.classList.add('hidden');
+    } else {
+      toggleBtn?.classList.remove('animate-spin-slow');
+      iconPlaying?.classList.add('hidden');
+      iconPaused?.classList.remove('hidden');
+    }
+  }
+
+  toggleBtn?.addEventListener('click', () => {
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play().then(() => {
+        updateMusicState(true);
+      }).catch(err => console.log('Audio play blocked:', err));
+    } else {
+      audio.pause();
+      updateMusicState(false);
+    }
+  });
+
+  window.addEventListener('invitation-opened', () => {
+    updateMusicState(true);
+  });
+</script>
+
+<style>
+  .animate-spin-slow {
+    animation: spin 8s linear infinite;
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>

@@ -1,0 +1,1 @@
+ALTER TABLE "comments" ADD COLUMN "attendance" varchar(50) DEFAULT 'hadir' NOT NULL;

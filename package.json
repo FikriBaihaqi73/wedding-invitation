@@ -12,10 +12,13 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/vercel": "^11.0.11",
+    "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.5",
     "dotenv": "^18.0.4",
     "drizzle-orm": "^0.45.3",
-    "postgres": "^3.4.9"
+    "postgres": "^3.4.9",
+    "tailwindcss": "^4.3.3"
   },
   "allowScripts": {
     "esbuild": true

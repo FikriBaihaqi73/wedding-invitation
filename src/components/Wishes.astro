@@ -1,0 +1,229 @@
+---
+interface WishItem {
+  id: number;
+  name: string;
+  attendance: string;
+  message: string;
+  createdAt: string;
+}
+
+interface Props {
+  guestName?: string;
+  guestId?: number;
+  initialWishes?: WishItem[];
+}
+
+const { 
+  guestName = "", 
+  guestId,
+  initialWishes = [
+    {
+      id: 1,
+      name: "Dimas & Rina",
+      attendance: "hadir",
+      message: "Selamat menempuh hidup baru Bagas & Sarah! Semoga menjadi keluarga yang sakinah, mawaddah, warrahmah. Aamiin.",
+      createdAt: "10 menit yang lalu"
+    },
+    {
+      id: 2,
+      name: "Alif Pratama",
+      attendance: "hadir",
+      message: "Barakallahu lakum wa baraka alaikum! Lancar sampai hari H yaa brader!",
+      createdAt: "1 jam yang lalu"
+    },
+    {
+      id: 3,
+      name: "dr. Maya Indah",
+      attendance: "tidak_hadir",
+      message: "Selamat yaa Sarah! Maaf belum bisa hadir langsung karena dinas, tapi doa terbaik selalu menyertai kalian berdua ❤️",
+      createdAt: "3 jam yang lalu"
+    }
+  ] 
+} = Astro.props;
+---
+
+<section id="wishes" class="py-20 px-4 max-w-4xl mx-auto">
+  <div class="text-center mb-12">
+    <span class="text-sm sm:text-base uppercase tracking-[0.3em] text-[#8C6010] font-bold">Doa & Restu</span>
+    <h2 class="font-serif-luxury text-3xl sm:text-4xl md:text-5xl text-[#1A202C] mt-2 mb-4 font-bold">
+      Konfirmasi Kehadiran & Ucapan
+    </h2>
+    <p class="max-w-md mx-auto text-base sm:text-lg text-gray-700 font-medium leading-relaxed">
+      Kehadiran serta doa restu Bapak/Ibu/Saudara/i merupakan kehormatan dan kebahagiaan yang tak terhingga bagi kami.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+    <!-- Form Card (5 cols on desktop) -->
+    <div class="md:col-span-5 bg-white p-6 sm:p-8 rounded-3xl border-2 border-[#D4AF37]/40 shadow-lg h-fit">
+      <h3 class="font-serif-luxury text-2xl font-bold text-[#1A202C] mb-5">Kirim Ucapan & Doa</h3>
+      
+      <form id="wish-form" class="space-y-5">
+        <input type="hidden" id="guest-id" name="guestId" value={guestId || ""} />
+        
+        <div>
+          <label for="sender-name" class="block text-sm font-bold text-[#3B2C1A] uppercase tracking-wider mb-2">
+            Nama Anda
+          </label>
+          <input
+            type="text"
+            id="sender-name"
+            name="name"
+            required
+            value={guestName}
+            placeholder="Masukkan nama lengkap..."
+            class="w-full px-4 py-3.5 text-base rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] bg-[#FAF7F2] transition-all font-medium"
+          />
+        </div>
+
+        <div>
+          <label for="attendance-status" class="block text-sm font-bold text-[#3B2C1A] uppercase tracking-wider mb-2">
+            Konfirmasi Kehadiran
+          </label>
+          <select
+            id="attendance-status"
+            name="attendance"
+            required
+            class="w-full px-4 py-3.5 text-base rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] bg-[#FAF7F2] transition-all text-[#1A202C] font-semibold"
+          >
+            <option value="hadir">✨ Hadir</option>
+            <option value="tidak_hadir">🙏 Maaf, Berhalangan Hadir</option>
+            <option value="ragu">⏳ Masih Ragu / Belum Pasti</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="message" class="block text-sm font-bold text-[#3B2C1A] uppercase tracking-wider mb-2">
+            Ucapan & Doa
+          </label>
+          <textarea
+            id="message"
+            name="message"
+            rows="4"
+            required
+            placeholder="Tuliskan ucapan dan doa terbaik Anda..."
+            class="w-full px-4 py-3.5 text-base rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] bg-[#FAF7F2] transition-all resize-none font-medium"
+          ></textarea>
+        </div>
+
+        <button
+          type="submit"
+          id="btn-submit-wish"
+          class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#C5A028] via-[#D4AF37] to-[#E5C158] text-[#1A1817] font-bold text-base tracking-wider uppercase shadow-lg hover:shadow-xl hover:brightness-105 active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2.5"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+          <span>Kirim Ucapan</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Wishes Stream (7 cols on desktop) -->
+    <div class="md:col-span-7 flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-serif-luxury text-2xl font-bold text-[#1A202C]">
+          Ucapan Doa Terkini (<span id="wishes-count">{initialWishes.length}</span>)
+        </h3>
+      </div>
+
+      <div id="wishes-list" class="space-y-4 max-h-[560px] overflow-y-auto pr-2">
+        {initialWishes.map((item) => (
+          <div class="bg-white p-6 rounded-3xl border-2 border-[#E8DFC8] shadow-sm flex flex-col gap-3 transition-all">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-[#D4AF37]/25 text-[#8C6010] font-bold text-base flex items-center justify-center shadow-inner">
+                  {item.name.charAt(0).toUpperCase()}
+                </div>
+                <h4 class="font-bold text-base sm:text-lg text-[#1A202C]">{item.name}</h4>
+              </div>
+
+              {item.attendance === 'hadir' && (
+                <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
+                  ✨ Hadir
+                </span>
+              )}
+              {item.attendance === 'tidak_hadir' && (
+                <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-rose-100 text-rose-900 border border-rose-300">
+                  🙏 Berhalangan
+                </span>
+              )}
+              {item.attendance === 'ragu' && (
+                <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                  ⏳ Masih Ragu
+                </span>
+              )}
+            </div>
+
+            <p class="text-base text-gray-800 leading-relaxed font-normal">{item.message}</p>
+            <span class="text-xs text-gray-500 font-medium self-end">{item.createdAt}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const wishForm = document.getElementById('wish-form') as HTMLFormElement | null;
+  const wishesList = document.getElementById('wishes-list');
+  const wishesCountEl = document.getElementById('wishes-count');
+
+  // Check URL param ?to= or ?guest= to auto-fill sender name
+  const urlParams = new URLSearchParams(window.location.search);
+  const guestParam = urlParams.get('to') || urlParams.get('guest');
+  const senderInput = document.getElementById('sender-name') as HTMLInputElement | null;
+  if (guestParam && senderInput && !senderInput.value) {
+    senderInput.value = decodeURIComponent(guestParam);
+  }
+
+  wishForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const nameInput = document.getElementById('sender-name') as HTMLInputElement;
+    const attendanceSelect = document.getElementById('attendance-status') as HTMLSelectElement;
+    const messageInput = document.getElementById('message') as HTMLTextAreaElement;
+
+    if (!nameInput.value.trim() || !messageInput.value.trim()) return;
+
+    // Build badge HTML based on attendance
+    let badgeHtml = '';
+    if (attendanceSelect.value === 'hadir') {
+      badgeHtml = '<span class="text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">✨ Hadir</span>';
+    } else if (attendanceSelect.value === 'tidak_hadir') {
+      badgeHtml = '<span class="text-xs font-bold px-3 py-1.5 rounded-full bg-rose-100 text-rose-900 border border-rose-300">🙏 Berhalangan</span>';
+    } else {
+      badgeHtml = '<span class="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">⏳ Masih Ragu</span>';
+    }
+
+    const card = document.createElement('div');
+    card.className = 'bg-white p-6 rounded-3xl border-2 border-[#D4AF37]/50 shadow-md flex flex-col gap-3 transition-all animate-fade-in';
+    card.innerHTML = `
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-[#D4AF37]/25 text-[#8C6010] font-bold text-base flex items-center justify-center shadow-inner">
+            ${nameInput.value.trim().charAt(0).toUpperCase()}
+          </div>
+          <h4 class="font-bold text-base sm:text-lg text-[#1A202C]">${nameInput.value.trim()}</h4>
+        </div>
+        ${badgeHtml}
+      </div>
+      <p class="text-base text-gray-800 leading-relaxed font-normal">${messageInput.value.trim()}</p>
+      <span class="text-xs text-gray-500 font-medium self-end">Baru saja</span>
+    `;
+
+    if (wishesList) {
+      wishesList.prepend(card);
+      if (wishesCountEl) {
+        const currentCount = parseInt(wishesCountEl.textContent || '0', 10);
+        wishesCountEl.textContent = String(currentCount + 1);
+      }
+    }
+
+    // Reset textarea
+    messageInput.value = '';
+
+    // Scroll to new wish
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+</script>

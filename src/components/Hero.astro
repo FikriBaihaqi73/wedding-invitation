@@ -1,0 +1,87 @@
+---
+---
+
+<section id="hero" class="relative min-h-screen flex flex-col items-center justify-center text-center px-4 py-20 overflow-hidden">
+  <!-- Background Image with Soft Parallax feel -->
+  <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=1600&auto=format&fit=crop')] bg-cover bg-center opacity-25"></div>
+  <div class="absolute inset-0 bg-gradient-to-b from-[#FAF7F2] via-transparent to-[#FAF7F2]"></div>
+
+  <div class="relative z-10 max-w-2xl mx-auto flex flex-col items-center">
+    <span class="inline-block text-sm sm:text-base uppercase tracking-[0.35em] text-[#8C6010] font-bold mb-4 px-5 py-2 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 shadow-sm">
+      The Wedding of
+    </span>
+
+    <h1 class="font-script-luxury text-7xl sm:text-8xl md:text-9xl text-[#1A202C] my-2 leading-tight drop-shadow-sm">
+      Bagas & Sarah
+    </h1>
+
+    <p class="font-serif-luxury text-2xl sm:text-3xl md:text-4xl text-[#3B2C1A] tracking-wider uppercase font-bold mt-3 mb-10">
+      Minggu, 25 Oktober 2026
+    </p>
+
+    <!-- Quote -->
+    <div class="w-full max-w-xl mx-auto bg-white/90 backdrop-blur-md border border-[#D4AF37]/40 rounded-3xl p-6 sm:p-8 shadow-md mb-12">
+      <p class="text-base sm:text-lg italic text-[#1F2937] leading-relaxed font-serif-luxury font-medium">
+        "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang."
+      </p>
+      <span class="block mt-3 text-xs sm:text-sm font-bold text-[#8C6010] uppercase tracking-wider">
+        — QS. Ar-Rum: 21 —
+      </span>
+    </div>
+
+    <!-- Countdown Timer -->
+    <div class="w-full max-w-lg bg-white/90 backdrop-blur-md rounded-3xl p-6 sm:p-8 border-2 border-[#D4AF37]/40 shadow-xl mb-8">
+      <p class="text-sm sm:text-base uppercase tracking-widest text-[#3B2C1A] font-bold mb-5">Menghitung Hari Bahagia</p>
+      <div id="countdown" class="grid grid-cols-4 gap-2 sm:gap-4 text-center">
+        <div class="bg-[#FAF7F2] border border-[#E2D8CC] rounded-2xl p-3 sm:p-4 shadow-sm">
+          <span id="days" class="block text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#A67C1E] font-serif-luxury">00</span>
+          <span class="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider mt-1 block">Hari</span>
+        </div>
+        <div class="bg-[#FAF7F2] border border-[#E2D8CC] rounded-2xl p-3 sm:p-4 shadow-sm">
+          <span id="hours" class="block text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#A67C1E] font-serif-luxury">00</span>
+          <span class="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider mt-1 block">Jam</span>
+        </div>
+        <div class="bg-[#FAF7F2] border border-[#E2D8CC] rounded-2xl p-3 sm:p-4 shadow-sm">
+          <span id="minutes" class="block text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#A67C1E] font-serif-luxury">00</span>
+          <span class="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider mt-1 block">Menit</span>
+        </div>
+        <div class="bg-[#FAF7F2] border border-[#E2D8CC] rounded-2xl p-3 sm:p-4 shadow-sm">
+          <span id="seconds" class="block text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#A67C1E] font-serif-luxury">00</span>
+          <span class="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider mt-1 block">Detik</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Target Wedding Date: October 25, 2026
+  const targetDate = new Date('2026-10-25T09:00:00+07:00').getTime();
+
+  function updateCountdown() {
+    const now = new Date().getTime();
+    const distance = targetDate - now;
+
+    if (distance < 0) {
+      return;
+    }
+
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    const daysEl = document.getElementById('days');
+    const hoursEl = document.getElementById('hours');
+    const minutesEl = document.getElementById('minutes');
+    const secondsEl = document.getElementById('seconds');
+
+    if (daysEl) daysEl.textContent = String(days).padStart(2, '0');
+    if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+    if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, '0');
+    if (secondsEl) secondsEl.textContent = String(seconds).padStart(2, '0');
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+</script>

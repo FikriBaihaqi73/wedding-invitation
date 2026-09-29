@@ -8,6 +8,13 @@
       "when": 1790664745959,
       "tag": "0000_happy_captain_flint",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790666013084,
+      "tag": "0001_slim_tinkerer",
+      "breakpoints": true
     }
   ]
 }

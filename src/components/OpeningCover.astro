@@ -1,0 +1,116 @@
+---
+interface Props {
+  guestName?: string;
+}
+
+const { guestName = "Tamu Undangan" } = Astro.props;
+---
+
+<div id="opening-cover" class="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1817] text-white transition-all duration-1000 ease-in-out">
+  <!-- Ambient background image with soft dark overlay -->
+  <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1600&auto=format&fit=crop')] bg-cover bg-center opacity-30 mix-blend-luminosity scale-105 transition-transform duration-1000"></div>
+  <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/90"></div>
+
+  <!-- Decorative Corner Ornaments -->
+  <div class="absolute top-6 left-6 w-16 h-16 border-t-2 border-l-2 border-[#D4AF37]/50 rounded-tl-xl pointer-events-none"></div>
+  <div class="absolute top-6 right-6 w-16 h-16 border-t-2 border-r-2 border-[#D4AF37]/50 rounded-tr-xl pointer-events-none"></div>
+  <div class="absolute bottom-6 left-6 w-16 h-16 border-b-2 border-l-2 border-[#D4AF37]/50 rounded-bl-xl pointer-events-none"></div>
+  <div class="absolute bottom-6 right-6 w-16 h-16 border-b-2 border-r-2 border-[#D4AF37]/50 rounded-br-xl pointer-events-none"></div>
+
+  <div class="relative z-10 max-w-lg w-full px-6 py-10 text-center flex flex-col items-center justify-center">
+    <!-- Subtitle / Header -->
+    <p class="text-sm sm:text-base uppercase tracking-[0.3em] text-[#E5C158] mb-3 font-semibold">The Wedding Celebration of</p>
+    
+    <!-- Couple Calligraphy Monogram / Names -->
+    <h1 class="font-script-luxury text-6xl sm:text-7xl md:text-8xl text-[#FAF7F2] mb-3 drop-shadow-lg leading-tight">
+      Bagas & Sarah
+    </h1>
+
+    <div class="w-32 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent my-4"></div>
+
+    <!-- Date -->
+    <p class="font-serif-luxury text-xl sm:text-2xl tracking-widest text-[#F0E6D8] font-bold uppercase mb-8">
+      Minggu, 25 Oktober 2026
+    </p>
+
+    <!-- Guest Card -->
+    <div class="w-full bg-white/15 backdrop-blur-md border-2 border-[#D4AF37]/50 rounded-3xl p-6 sm:p-8 mb-8 shadow-2xl animate-fade-in">
+      <p class="text-sm sm:text-base text-[#F0E6D8] font-medium tracking-wider uppercase mb-2">Kepada Yth. Bapak/Ibu/Saudara/i:</p>
+      <h2 id="cover-guest-name" class="text-3xl sm:text-4xl md:text-5xl font-bold font-serif-luxury text-[#FFD700] capitalize tracking-wide my-2 drop-shadow">
+        {guestName}
+      </h2>
+      <p class="text-xs sm:text-sm text-gray-200 italic mt-3 font-light">
+        *Mohon maaf apabila ada kesalahan penulisan nama/gelar
+      </p>
+    </div>
+
+    <!-- Open Invitation Button -->
+    <button
+      id="btn-open-invitation"
+      type="button"
+      class="group relative inline-flex items-center gap-3 px-10 py-4 rounded-full bg-gradient-to-r from-[#C5A028] via-[#D4AF37] to-[#E5C158] text-[#1A1817] font-bold text-base sm:text-lg tracking-wider uppercase shadow-2xl hover:shadow-[0_0_30px_rgba(212,175,55,0.8)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer animate-pulse-glow"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-transform group-hover:rotate-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+      <span>Buka Undangan</span>
+    </button>
+  </div>
+</div>
+
+<script>
+  // Lock body scroll initially
+  document.body.classList.add('overflow-hidden');
+
+  const btnOpen = document.getElementById('btn-open-invitation');
+  const cover = document.getElementById('opening-cover');
+  const bgAudio = document.getElementById('wedding-audio') as HTMLAudioElement | null;
+  const musicToggle = document.getElementById('music-toggle');
+
+  // Check URL param ?to= or ?guest= to override guest name dynamically
+  const urlParams = new URLSearchParams(window.location.search);
+  const guestParam = urlParams.get('to') || urlParams.get('guest');
+  if (guestParam) {
+    const guestEl = document.getElementById('cover-guest-name');
+    if (guestEl) {
+      guestEl.textContent = decodeURIComponent(guestParam);
+    }
+  }
+
+  btnOpen?.addEventListener('click', () => {
+    // Unlock body scroll
+    document.body.classList.remove('overflow-hidden');
+
+    // Slide up / fade out cover
+    if (cover) {
+      cover.classList.add('-translate-y-full', 'opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        cover.style.display = 'none';
+      }, 1000);
+    }
+
+    // Play background music if available
+    if (bgAudio) {
+      bgAudio.play().then(() => {
+        if (musicToggle) {
+          musicToggle.classList.add('animate-spin-slow');
+        }
+      }).catch(err => {
+        console.log('Audio autoplay prevented:', err);
+      });
+    }
+
+    // Trigger custom event so other components know invitation is open
+    window.dispatchEvent(new CustomEvent('invitation-opened'));
+  });
+</script>
+
+<style>
+  .animate-spin-slow {
+    animation: spin 6s linear infinite;
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>

@@ -1,0 +1,38 @@
+---
+const galleryImages = [
+  "https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=800&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=800&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=800&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=800&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=800&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=800&auto=format&fit=crop"
+];
+---
+
+<section id="gallery" class="py-20 px-4 max-w-5xl mx-auto text-center">
+  <div class="mb-14">
+    <span class="text-sm sm:text-base uppercase tracking-[0.3em] text-[#8C6010] font-bold">Galeri Foto</span>
+    <h2 class="font-serif-luxury text-3xl sm:text-4xl md:text-5xl text-[#1A202C] mt-2 mb-4 font-bold">
+      Momen Bahagia Kami
+    </h2>
+    <p class="max-w-xl mx-auto text-base sm:text-lg text-gray-700 font-medium">
+      Setiap detik kebersamaan adalah anugerah terindah yang senantiasa kami syukuri.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+    {galleryImages.map((src, idx) => (
+      <div class="group relative overflow-hidden rounded-3xl shadow-md aspect-[4/5] bg-gray-200 border border-[#E8DFC8]">
+        <img
+          src={src}
+          alt={`Gallery ${idx + 1}`}
+          class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          loading="lazy"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+          <span class="text-sm text-white tracking-widest uppercase font-serif-luxury font-bold">Bagas & Sarah</span>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>

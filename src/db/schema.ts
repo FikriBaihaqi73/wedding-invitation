@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, varchar, text, timestamp } from "drizzle-orm/pg-core";
 
 // Tabel tamu undangan, menggunakan slug unik untuk link undangan masing-masing
 export const guests = pgTable("guests", {
@@ -11,7 +11,7 @@ export const guests = pgTable("guests", {
 // Tabel komentar & RSVP dari para tamu
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
-  guestId: serial("guest_id").references(() => guests.id, { onDelete: "cascade" }),
+  guestId: integer("guest_id").references(() => guests.id, { onDelete: "cascade" }),
   message: text("message").notNull(),
   attendance: varchar("attendance", { length: 50 }).notNull().default('hadir'), // status kehadiran (hadir, tidak_hadir, dsb)
   createdAt: timestamp("created_at").defaultNow(),

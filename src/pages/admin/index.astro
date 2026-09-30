@@ -1,0 +1,91 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { db } from '../../db';
+import { guests, comments } from '../../db/schema';
+import { desc, eq, sql } from 'drizzle-orm';
+
+const totalGuests = await db.select({ count: sql<number>`count(*)` }).from(guests);
+const totalComments = await db.select({ count: sql<number>`count(*)` }).from(comments);
+
+const recentGuests = await db.select().from(guests).orderBy(desc(guests.createdAt)).limit(5);
+const recentComments = await db.select({
+  id: comments.id,
+  message: comments.message,
+  attendance: comments.attendance,
+  createdAt: comments.createdAt,
+  guestName: guests.name,
+}).from(comments)
+  .leftJoin(guests, eq(comments.guestId, guests.id))
+  .orderBy(desc(comments.createdAt))
+  .limit(3);
+---
+
+<AdminLayout title="Dashboard Overview" activeTab="dashboard">
+  <div class="space-y-8 max-w-5xl mx-auto">
+    <header>
+      <h1 class="text-3xl font-serif text-[#2D3748] tracking-tight">Dashboard Overview</h1>
+      <p class="text-gray-500 mt-2 font-medium">Ringkasan undangan dan ucapan pernikahan Anda.</p>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Tamu</p>
+          <h2 class="text-4xl font-bold text-[#2D3748]">{totalGuests[0].count}</h2>
+        </div>
+        <div class="w-16 h-16 bg-[#FAF7F2] rounded-2xl flex items-center justify-center text-[#D4AF37]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+      </div>
+      <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Ucapan</p>
+          <h2 class="text-4xl font-bold text-[#2D3748]">{totalComments[0].count}</h2>
+        </div>
+        <div class="w-16 h-16 bg-[#FAF7F2] rounded-2xl flex items-center justify-center text-[#D4AF37]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div class="bg-white rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold text-[#2D3748]">Tamu Terbaru</h3>
+          <a href="/admin/guests" class="text-sm text-[#D4AF37] hover:underline font-medium">Lihat Semua &rarr;</a>
+        </div>
+        <ul class="space-y-4">
+          {recentGuests.length === 0 ? <p class="text-gray-500">Belum ada tamu.</p> : recentGuests.map(g => (
+            <li class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center font-bold text-gray-600">
+                {g.name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p class="font-bold text-sm text-[#2D3748]">{g.name}</p>
+                <a href={`/to/${g.slug}`} target="_blank" class="text-xs text-gray-400 hover:text-[#D4AF37]">/to/{g.slug}</a>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold text-[#2D3748]">Ucapan Terbaru</h3>
+          <a href="/admin/wishes" class="text-sm text-[#D4AF37] hover:underline font-medium">Lihat Semua &rarr;</a>
+        </div>
+        <div class="space-y-4">
+          {recentComments.length === 0 ? <p class="text-gray-500">Belum ada ucapan.</p> : recentComments.map(c => (
+            <div class="p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
+              <div class="flex justify-between items-start mb-2">
+                <p class="font-bold text-sm text-[#2D3748]">{c.guestName || 'Anonim'}</p>
+                <span class="text-[10px] px-2 py-1 rounded-full bg-white border border-gray-200 font-medium">{c.attendance}</span>
+              </div>
+              <p class="text-sm text-gray-600 line-clamp-2 italic">"{c.message}"</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

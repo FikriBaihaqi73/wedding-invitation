@@ -1,45 +1,43 @@
 ---
-interface WishItem {
-  id: number;
-  name: string;
-  attendance: string;
-  message: string;
-  createdAt: string;
-}
+import { db } from '../db';
+import { comments, guests } from '../db/schema';
+import { desc, eq } from 'drizzle-orm';
 
 interface Props {
   guestName?: string;
   guestId?: number;
-  initialWishes?: WishItem[];
 }
 
 const { 
   guestName = "", 
   guestId,
-  initialWishes = [
-    {
-      id: 1,
-      name: "Dimas & Rina",
-      attendance: "hadir",
-      message: "Selamat menempuh hidup baru Bagas & Sarah! Semoga menjadi keluarga yang sakinah, mawaddah, warrahmah. Aamiin.",
-      createdAt: "10 menit yang lalu"
-    },
-    {
-      id: 2,
-      name: "Alif Pratama",
-      attendance: "hadir",
-      message: "Barakallahu lakum wa baraka alaikum! Lancar sampai hari H yaa brader!",
-      createdAt: "1 jam yang lalu"
-    },
-    {
-      id: 3,
-      name: "dr. Maya Indah",
-      attendance: "tidak_hadir",
-      message: "Selamat yaa Sarah! Maaf belum bisa hadir langsung karena dinas, tapi doa terbaik selalu menyertai kalian berdua ❤️",
-      createdAt: "3 jam yang lalu"
-    }
-  ] 
 } = Astro.props;
+
+// Fetch wishes from DB
+const rawWishes = await db.select({
+  id: comments.id,
+  name: guests.name,
+  attendance: comments.attendance,
+  message: comments.message,
+  createdAt: comments.createdAt,
+}).from(comments)
+  .leftJoin(guests, eq(comments.guestId, guests.id))
+  .orderBy(desc(comments.createdAt));
+
+const initialWishes = rawWishes.map(w => {
+  let timeStr = 'Baru saja';
+  if (w.createdAt) {
+    const date = new Date(w.createdAt);
+    timeStr = date.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+  return {
+    id: w.id,
+    name: w.name || 'Tamu Anonim',
+    attendance: w.attendance,
+    message: w.message,
+    createdAt: timeStr
+  }
+});
 ---
 
 <section id="wishes" class="py-20 px-4 max-w-4xl mx-auto">
@@ -53,9 +51,10 @@ const {
     </p>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
-    <!-- Form Card (5 cols on desktop) -->
-    <div class="md:col-span-5 bg-white p-6 sm:p-8 rounded-3xl border-2 border-[#D4AF37]/40 shadow-lg h-fit">
+
+  <div class="flex flex-col gap-12">
+    <!-- Form Card -->
+    <div class="bg-white p-6 sm:p-8 rounded-3xl border-2 border-[#D4AF37]/40 shadow-lg h-fit max-w-3xl mx-auto w-full">
       <h3 class="font-serif-luxury text-2xl font-bold text-[#1A202C] mb-5">Kirim Ucapan & Doa</h3>
       
       <form id="wish-form" class="space-y-5">
@@ -93,17 +92,13 @@ const {
         </div>
 
         <div>
-          <label for="message" class="block text-sm font-bold text-[#3B2C1A] uppercase tracking-wider mb-2">
+          <label class="block text-sm font-bold text-[#3B2C1A] uppercase tracking-wider mb-2">
             Ucapan & Doa
           </label>
-          <textarea
-            id="message"
-            name="message"
-            rows="4"
-            required
-            placeholder="Tuliskan ucapan dan doa terbaik Anda..."
-            class="w-full px-4 py-3.5 text-base rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] bg-[#FAF7F2] transition-all resize-none font-medium"
-          ></textarea>
+          <div class="bg-white rounded-2xl overflow-hidden border-2 border-gray-300 focus-within:ring-2 focus-within:ring-[#D4AF37] focus-within:border-[#D4AF37] transition-all">
+            <div id="quill-editor" style="min-height: 120px;"></div>
+          </div>
+          <input type="hidden" id="message" name="message" required />
         </div>
 
         <button
@@ -119,8 +114,8 @@ const {
       </form>
     </div>
 
-    <!-- Wishes Stream (7 cols on desktop) -->
-    <div class="md:col-span-7 flex flex-col">
+    <!-- Wishes Stream -->
+    <div class="flex flex-col max-w-4xl mx-auto w-full">
       <div class="flex items-center justify-between mb-4">
         <h3 class="font-serif-luxury text-2xl font-bold text-[#1A202C]">
           Ucapan Doa Terkini (<span id="wishes-count">{initialWishes.length}</span>)
@@ -155,7 +150,7 @@ const {
               )}
             </div>
 
-            <p class="text-base text-gray-800 leading-relaxed font-normal">{item.message}</p>
+            <div class="text-base text-gray-800 leading-relaxed font-normal quill-content" set:html={item.message}></div>
             <span class="text-xs text-gray-500 font-medium self-end">{item.createdAt}</span>
           </div>
         ))}
@@ -164,27 +159,84 @@ const {
   </div>
 </section>
 
+<!-- Quill CSS & JS (Bundled locally) -->
+<style>
+  .ql-toolbar.ql-snow {
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #FAF7F2;
+    padding: 12px;
+  }
+  .ql-container.ql-snow {
+    border: none;
+    background-color: #FAF7F2;
+    font-family: inherit;
+    font-size: 1rem;
+  }
+  .ql-editor {
+    min-height: 120px;
+    padding: 1rem;
+  }
+  .quill-content p {
+    margin-bottom: 0.5rem;
+  }
+</style>
+
 <script>
-  const wishForm = document.getElementById('wish-form') as HTMLFormElement | null;
+  import Quill from 'quill';
+  import 'quill/dist/quill.snow.css';
+
+  const wishForm = document.getElementById('wish-form') as HTMLFormElement;
   const wishesList = document.getElementById('wishes-list');
   const wishesCountEl = document.getElementById('wishes-count');
 
   // Check URL param ?to= or ?guest= to auto-fill sender name
   const urlParams = new URLSearchParams(window.location.search);
   const guestParam = urlParams.get('to') || urlParams.get('guest');
-  const senderInput = document.getElementById('sender-name') as HTMLInputElement | null;
+  const senderInput = document.getElementById('sender-name') as HTMLInputElement;
   if (guestParam && senderInput && !senderInput.value) {
     senderInput.value = decodeURIComponent(guestParam);
   }
+
+  // Initialize Quill
+  var quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    placeholder: 'Tuliskan ucapan dan doa terbaik Anda...',
+    modules: {
+      toolbar: [
+        ['bold', 'italic', 'underline'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['link', 'emoji']
+      ]
+    }
+  });
 
   wishForm?.addEventListener('submit', (e) => {
     e.preventDefault();
 
     const nameInput = document.getElementById('sender-name') as HTMLInputElement;
     const attendanceSelect = document.getElementById('attendance-status') as HTMLSelectElement;
-    const messageInput = document.getElementById('message') as HTMLTextAreaElement;
+    const messageInput = document.getElementById('message') as HTMLInputElement;
+    
+    // Sync Quill content to hidden input
+    messageInput.value = quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML;
 
     if (!nameInput.value.trim() || !messageInput.value.trim()) return;
+
+    // Save to database via API
+    const formData = new FormData();
+    const guestIdEl = document.getElementById('guest-id') as HTMLInputElement;
+    if (guestIdEl && guestIdEl.value) {
+      formData.append('guestId', guestIdEl.value);
+    }
+    formData.append('name', nameInput.value.trim());
+    formData.append('attendance', attendanceSelect.value);
+    formData.append('message', messageInput.value.trim());
+
+    fetch('/api/wishes', {
+      method: 'POST',
+      body: formData
+    }).catch(err => console.error('Error saving wish:', err));
 
     // Build badge HTML based on attendance
     let badgeHtml = '';
@@ -208,7 +260,7 @@ const {
         </div>
         ${badgeHtml}
       </div>
-      <p class="text-base text-gray-800 leading-relaxed font-normal">${messageInput.value.trim()}</p>
+      <div class="text-base text-gray-800 leading-relaxed font-normal quill-content">${messageInput.value.trim()}</div>
       <span class="text-xs text-gray-500 font-medium self-end">Baru saja</span>
     `;
 
@@ -221,6 +273,7 @@ const {
     }
 
     // Reset textarea
+    quill.setText('');
     messageInput.value = '';
 
     // Scroll to new wish

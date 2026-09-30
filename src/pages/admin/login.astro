@@ -1,0 +1,76 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { createSession } from '../../lib/auth';
+
+let errorMessage = '';
+
+if (Astro.request.method === 'POST') {
+  const formData = await Astro.request.formData();
+  const password = formData.get('password')?.toString();
+  
+  const expectedPassword = import.meta.env.ADMIN_PASSWORD || 'admin';
+  
+  if (password === expectedPassword) {
+    const token = await createSession({ role: 'admin' });
+    Astro.cookies.set('admin_session', token, {
+      path: '/',
+      httpOnly: true,
+      secure: import.meta.env.PROD,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 // 1 day
+    });
+    return Astro.redirect('/admin');
+  } else {
+    errorMessage = 'Password salah!';
+  }
+}
+---
+<Layout title="Admin Login">
+  <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+      <div class="text-center">
+        <h2 class="text-3xl font-serif font-bold tracking-tight text-gray-900">Admin Login</h2>
+        <p class="mt-2 text-sm text-gray-600">
+          Silakan masuk untuk mengelola undangan
+        </p>
+      </div>
+
+      <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow-xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
+          <form class="space-y-6" method="POST">
+            {errorMessage && (
+              <div class="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-100 text-center">
+                {errorMessage}
+              </div>
+            )}
+            
+            <div>
+              <label for="password" class="block text-sm font-medium leading-6 text-gray-900">
+                Password
+              </label>
+              <div class="mt-2">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  class="block w-full rounded-xl border-0 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#D4AF37] sm:text-sm sm:leading-6 px-4"
+                  placeholder="Masukkan password admin"
+                />
+              </div>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                class="flex w-full justify-center rounded-xl bg-[#2D3748] px-3 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#1a202c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D3748] transition-colors"
+              >
+                Masuk Dashboard
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,258 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { db } from '../../db';
+import { guests } from '../../db/schema';
+import { desc, eq } from 'drizzle-orm';
+
+let errorMessage = Astro.url.searchParams.get('error') || '';
+let successMessage = Astro.url.searchParams.get('success') || '';
+
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const action = formData.get('action');
+
+    if (action === 'add_guest') {
+      const name = formData.get('name')?.toString() || '';
+      
+      if (!name.trim()) {
+        return Astro.redirect('/admin/guests?error=' + encodeURIComponent('Nama tamu tidak boleh kosong.'));
+      } else {
+        let baseSlug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        let slug = baseSlug;
+        
+        let isUnique = false;
+        let counter = 1;
+        while (!isUnique) {
+          const existing = await db.select().from(guests).where(eq(guests.slug, slug));
+          if (existing.length === 0) {
+            isUnique = true;
+          } else {
+            slug = `${baseSlug}-${counter}`;
+            counter++;
+          }
+        }
+
+        await db.insert(guests).values({
+          name: name.trim(),
+          slug: slug,
+        });
+        return Astro.redirect('/admin/guests?success=' + encodeURIComponent(`Tamu ${name.trim()} berhasil ditambahkan!`));
+      }
+    } else if (action === 'delete_guest') {
+      const slugToDelete = formData.get('slug')?.toString();
+      if (slugToDelete) {
+        await db.delete(guests).where(eq(guests.slug, slugToDelete));
+        return Astro.redirect('/admin/guests?success=' + encodeURIComponent('Tamu berhasil dihapus!'));
+      }
+    }
+  } catch (err) {
+    return Astro.redirect('/admin/guests?error=' + encodeURIComponent('Terjadi kesalahan saat memproses data.'));
+  }
+}
+
+const allGuests = await db.select().from(guests).orderBy(desc(guests.createdAt));
+---
+
+<AdminLayout title="Kelola Tamu" activeTab="guests">
+  <div class="space-y-8 max-w-5xl mx-auto">
+    <header>
+      <h1 class="text-3xl font-serif text-[#2D3748] tracking-tight">Daftar Tamu</h1>
+      <p class="text-gray-500 mt-2 font-medium">Tambahkan dan lihat daftar tamu undangan Anda.</p>
+    </header>
+
+    {errorMessage && (
+      <div class="bg-red-50 text-red-700 px-6 py-4 rounded-2xl border border-red-100 flex gap-3 items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+        {errorMessage}
+      </div>
+    )}
+    {successMessage && (
+      <div class="bg-green-50 text-green-700 px-6 py-4 rounded-2xl border border-green-100 flex gap-3 items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+        {successMessage}
+      </div>
+    )}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm sticky top-24">
+          <h2 class="font-bold text-lg mb-4 text-[#2D3748]">Tambah Tamu Baru</h2>
+          <form method="POST" class="space-y-4">
+            <input type="hidden" name="action" value="add_guest" />
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama Tamu</label>
+              <input type="text" name="name" id="name" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none" placeholder="Contoh: Budi Santoso" />
+            </div>
+            <button type="submit" class="w-full bg-[#2D3748] hover:bg-[#1a202c] text-white py-2.5 rounded-xl font-medium transition-colors">
+              Tambah Tamu
+            </button>
+          </form>
+        </div>
+      </div>
+      
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+            <h2 class="font-bold text-lg text-[#2D3748]">Semua Tamu ({allGuests.length})</h2>
+            {allGuests.length > 0 && (
+              <button 
+                id="copy-all-btn" 
+                data-guests={JSON.stringify(allGuests.map(g => ({name: g.name, slug: g.slug})))}
+                class="text-sm px-4 py-2 bg-[#FAF7F2] text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg hover:bg-[#D4AF37] hover:text-white transition-colors flex items-center gap-2 font-medium"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                Salin Semua
+              </button>
+            )}
+          </div>
+          <div class="divide-y divide-gray-50 max-h-[70vh] overflow-y-auto">
+            {allGuests.length === 0 ? (
+              <div class="p-12 text-center text-gray-400">Belum ada tamu.</div>
+            ) : allGuests.map(g => (
+              <div class="p-4 sm:p-6 hover:bg-gray-50/50 transition-colors flex justify-between items-center group">
+                <div>
+                  <h3 class="font-bold text-[#2D3748] text-lg">{g.name}</h3>
+                  <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    <a href={`/to/${g.slug}`} target="_blank" class="hover:text-[#D4AF37]">/to/{g.slug}</a>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button data-name={g.name} data-slug={g.slug} class="copy-single-btn w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#D4AF37] hover:border-[#D4AF37] transition-all" title="Salin ke WhatsApp">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                  </button>
+                  <a href={`/to/${g.slug}`} target="_blank" class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#D4AF37] hover:border-[#D4AF37] transition-all" title="Buka Undangan">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                  </a>
+                  <form method="POST" id={`delete-form-${g.slug}`} class="inline m-0">
+                    <input type="hidden" name="action" value="delete_guest" />
+                    <input type="hidden" name="slug" value={g.slug} />
+                    <button type="button" onclick={`openDeleteModal('${g.slug}', '${g.name}')`} class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-red-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all" title="Hapus Tamu">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="absolute inset-0 bg-gray-900/30 backdrop-blur-sm transition-opacity" onclick="closeDeleteModal()"></div>
+    <div class="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 relative z-10 shadow-2xl animate-fade-in-up">
+      <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+      </div>
+      <h3 class="text-xl font-bold text-center text-[#2D3748] mb-2">Hapus Tamu?</h3>
+      <p class="text-center text-gray-500 mb-8 text-sm" id="delete-modal-text">Apakah Anda yakin ingin menghapus tamu ini?</p>
+      
+      <div class="flex gap-3">
+        <button type="button" onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors">Batal</button>
+        <button type="button" id="confirm-delete-btn" class="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20">Ya, Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .animate-fade-in-up {
+      animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+
+  <script is:inline>
+    let guestSlugToDelete = null;
+
+    function openDeleteModal(slug, name) {
+      guestSlugToDelete = slug;
+      document.getElementById('delete-modal-text').innerText = `Apakah Anda yakin ingin menghapus "${name}"? Data ucapan juga akan terhapus.`;
+      
+      const modal = document.getElementById('delete-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDeleteModal() {
+      guestSlugToDelete = null;
+      const modal = document.getElementById('delete-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    document.getElementById('confirm-delete-btn')?.addEventListener('click', () => {
+      if (guestSlugToDelete) {
+        document.getElementById(`delete-form-${guestSlugToDelete}`).submit();
+      }
+    });
+
+    function fallbackCopyTextToClipboard(text) {
+      var textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.position = "fixed";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function copyText(text) {
+      if (!navigator.clipboard) {
+        fallbackCopyTextToClipboard(text);
+        return;
+      }
+      navigator.clipboard.writeText(text);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const copyAllBtn = document.getElementById('copy-all-btn');
+      if (copyAllBtn) {
+        copyAllBtn.addEventListener('click', () => {
+          const guests = JSON.parse(copyAllBtn.getAttribute('data-guests') || '[]');
+          const origin = window.location.origin;
+          const text = guests.map((g, index) => `${index + 1}. ${g.name} = ${origin}/to/${g.slug}`).join('\n');
+          
+          copyText(text);
+          
+          const originalText = copyAllBtn.innerHTML;
+          copyAllBtn.innerHTML = 'Tersalin!';
+          setTimeout(() => {
+            copyAllBtn.innerHTML = originalText;
+          }, 2000);
+        });
+      }
+
+      const copyBtns = document.querySelectorAll('.copy-single-btn');
+      copyBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const name = btn.getAttribute('data-name');
+          const slug = btn.getAttribute('data-slug');
+          const origin = window.location.origin;
+          const text = `Kepada Yth. ${name}\n\nBerikut link undangan pernikahan kami:\n${origin}/to/${slug}`;
+          
+          copyText(text);
+          
+          const icon = btn.innerHTML;
+          btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+          setTimeout(() => {
+            btn.innerHTML = icon;
+          }, 2000);
+        });
+      });
+    });
+  </script>
+</AdminLayout>

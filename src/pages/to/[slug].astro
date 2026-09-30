@@ -32,19 +32,14 @@ if (slug) {
       guestName = foundGuest.name;
       guestId = foundGuest.id;
     } else {
-      // Fallback: format slug "budi-santoso" to "Budi Santoso"
-      guestName = slug
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+      // Guest not found in database, redirect to maaf page
+      return Astro.redirect('/maaf');
     }
   } catch (err) {
-    // If DB is offline or table empty, fallback gracefully from slug
-    guestName = slug
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+    return Astro.redirect('/maaf');
   }
+} else {
+  return Astro.redirect('/maaf');
 }
 ---
 
